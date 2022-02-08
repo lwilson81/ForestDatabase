@@ -14,10 +14,10 @@ def reset_database(connection):
     returns: None
     """
    
-    
     # , query1, query2, statement]
-    query0 = 'DROP TABLE IF EXISTS dances, steps;' #insert table names here
-    query1 = """CREATE TABLE dances (
+    dropTables = 'DROP TABLE IF EXISTS dances, steps;' #insert table names here
+
+    createDanceTable = """CREATE TABLE dances (
         name VARCHAR(255) NOT NULL,
         danceId bigint(20) NOT NULL AUTO_INCREMENT,
         moves JSON,
@@ -26,7 +26,7 @@ def reset_database(connection):
     ); """ 
     
     # joint1 JSON will be [angle, time]   
-    query2 = """CREATE TABLE steps (
+    createStepTable = """CREATE TABLE steps (
         name VARCHAR(255), 
         stepId bigint(20) NOT NULL AUTO_INCREMENT,
         joint1 JSON, 
@@ -38,12 +38,14 @@ def reset_database(connection):
         joint7 JSON, 
     );"""
 
-    queries = [query0, query1, query2]
+    creationQueries = [dropTables, createDanceTable, createStepTable]
+    for query in creationQueries:
+        cursor.execute(query)
+
     statement = "INSERT INTO geekstudent( id, name,gender, subject)\
 VALUES(6,'Shoit','M', 'ML')"
     cursor = connection.cursor()
-    for query in queries:
-        cursor.execute(query)
+    
    
     cursor.close()
     connection.commit()
@@ -52,7 +54,15 @@ VALUES(6,'Shoit','M', 'ML')"
 
 def fill_db():
     for step in dance_step_database:
-        print(step)
+        angles = step[0]
+        times = step[1]
+        # check if element is an array, if not make it one and then insert into DB
+        # for i in len(angles):
+            
+        # for ___ in angles:
+        #     if !__ isinstance([0, 10, 20, 30], list):
+        #         __ = [__]
+
 
 
 
