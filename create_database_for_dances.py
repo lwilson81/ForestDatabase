@@ -58,20 +58,35 @@ def fill_db():
     cursor.close()
     connection.commit()
 
+def check_valid_step(step_name, joints):
+    """
+    check if the data input can be a valid step
+    """
+    pass
 
-def insert_step(step_name, *joints):  # insert attributes
+def check_valid_dance(dance_name, steps):
+    """
+    check if the data input can be a valid dance
+    """
+    pass
+
+def insert_step(step_name, joints):  # insert attributes
     """
     insert a new row into the table using the parameters given. you don't
     need to input the petID column, but you MUST use %s for the other columns.
     returns: None
     """
     cursor = connection.cursor()
-    addStep = """INSERT INTO `steps` (name, joint1, joint2, joint3, joint4, joint5, joint6, joint7) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"""
-    cursor.execute(addStep, (step_name, *joints))
+    addStep = """INSERT INTO `steps` (name, joints) VALUES(%s, %s)"""
+    cursor.execute(addStep, (step_name, json.dumps(joints)))
     cursor.close()
     connection.commit()
 
-# main method to execute
+def insert_dance(dance_name, steps):
+    """
+    insert dance
+    """
+    pass
 
 
 def main():
