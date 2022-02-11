@@ -73,7 +73,6 @@ def insert_step(step_name, *joints):  # insert attributes
     """
     insert a new row into the table using the parameters given. you don't
     need to input the petID column, but you MUST use %s for the other columns.
-
     returns: None
     """
     cursor = connection.cursor()
