@@ -27,13 +27,7 @@ def reset_database(connection):
     # joint1 JSON will be JSON {}
     createStepTable = """CREATE TABLE steps (
         name VARCHAR(255), 
-        joint1 varchar(255), 
-        joint2 VARCHAR(255), 
-        joint3 VARCHAR(255), 
-        joint4 VARCHAR(255), 
-        joint5 VARCHAR(255), 
-        joint6 VARCHAR(255), 
-        joint7 VARCHAR(255), 
+        joints varchar(255), 
         PRIMARY KEY (name)
     );"""
 
@@ -55,15 +49,11 @@ def fill_db():
         step_name = namestr(step, globals())[0]
         angles = step[0]
         times = step[1]
-        json_list = list()
-
-        for i in range(len(angles)):
-            joint_dict = dict()
-            joint_dict["angles"] = angles[i]
-            joint_dict["times"] = times[i]
-            json_list.append(json.dumps(joint_dict))
-        addStep = """INSERT INTO `steps` (name, joint1, joint2, joint3, joint4, joint5, joint6, joint7) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"""
-        cursor.execute(addStep, (step_name, *json_list))
+        joint_dict = dict()
+        joint_dict["angles"] = angles
+        joint_dict["times"] = times
+        addStep = """INSERT INTO `steps` (name, joints) VALUES(%s, %s)"""
+        cursor.execute(addStep, (step_name, json.dumps(joint_dict)))
 
     cursor.close()
     connection.commit()
@@ -97,16 +87,16 @@ def main():
                                  charset="utf8mb4",
                                  cursorclass=pymysql.cursors.Cursor)
 
-
     ############ TO CREATE DATABASE UNCOMMENT THIS SECTION ############
     # cursor.execute("CREATE DATABASE Forest;")
     # cursor.execute("USE Forest;")
     ###################################################################
 
     ####### TO RESET AND REFILL DATABASE UNCOMMENT THIS SECTION #######
-    # cursor.execute("USE Forest;")
-    # reset_database(connection)
-    # fill_db()
+    cursor = connection.cursor()
+    cursor.execute("USE Forest;")
+    reset_database(connection)
+    fill_db()
     ###################################################################
 
     connection.close()
