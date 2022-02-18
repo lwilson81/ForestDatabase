@@ -62,13 +62,24 @@ def check_valid_step(step_name, joints):
     """
     check if the data input can be a valid step
     """
+    # vertical 360, -360 (1, 3, 5, 7)
+    # horizontal: others 
+    # velocity: 4 and up (180 degrees) 
+    # bottom joint (1) all the way dwn: 6 can 't be all the way down 
+    # addition of all the joints 
+
+
+    # joint discontinuitry: 
+    # functional steps dance_func 
+
     pass
 
 def check_valid_dance(dance_name, steps):
     """
     check if the data input can be a valid dance
     """
-    pass
+    passes = False
+    return passes
 
 def insert_step(step_name, joints):  # insert attributes
     """
@@ -76,17 +87,27 @@ def insert_step(step_name, joints):  # insert attributes
     need to input the petID column, but you MUST use %s for the other columns.
     returns: None
     """
-    cursor = connection.cursor()
-    addStep = """INSERT INTO `steps` (name, joints) VALUES(%s, %s)"""
-    cursor.execute(addStep, (step_name, json.dumps(joints)))
-    cursor.close()
-    connection.commit()
+    if check_valid_step():
+        cursor = connection.cursor()
+        addStep = """INSERT INTO `steps` (name, joints) VALUES(%s, %s)"""
+        cursor.execute(addStep, (step_name, json.dumps(joints)))
+        cursor.close()
+        connection.commit()
+    else:
+        print("Error: not valid step")
 
 def insert_dance(dance_name, steps):
     """
     insert dance
     """
-    pass
+    if check_valid_dance():    
+        cursor = connection.cursor()
+        addStep = """INSERT INTO `dances` (name, steps) VALUES(%s, %s)"""
+        cursor.execute(addStep, (dance_name, json.dumps(steps)))
+        cursor.close()
+        connection.commit()
+    else:
+        print("Error: not valid dance!")
 
 
 def main():
