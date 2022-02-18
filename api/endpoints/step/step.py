@@ -6,16 +6,16 @@ from models.models import db, StepModel
 step_api = Blueprint("step_api", __name__)
 
 
-@step_api.route("/addstep", methods=("POST",))
+@step_api.route("/addStep", methods=("POST",))
 def addStep():
     body = request.get_json()
-    step_name = str(body["step"])
+    step_name = str(body["step_name"])
     joints = str(body["joints"])
     error = None
 
     if not step_name or not joints:
         error = "Missing Data"
-    if StepModel.query.filter_by(name=step_name).first() is not None:
+    if StepModel.query.filter_by(step_name=step_name).first() is not None:
         error = f"Step {step_name} already exists"
 
     if error is None:
@@ -28,30 +28,30 @@ def addStep():
         return jsonify({"status": "bad", "error": error}), 400
 
 
-@step_api.route("/getsteps", methods=("GET",))
-def getsteps():
-    response = stepModel.query.all()
+@step_api.route("/getSteps", methods=("GET",))
+def getSteps():
+    response = StepModel.query.all()
     steps = []
     for item in response:
-        steps.append({"name": item.name})
+        steps.append({"step_name": item.step_name, "joints":item.joints})
     return jsonify({"steps": steps}), 200
 
 
-@step_api.route("/deletestep", methods=("DELETE",))
-def deletestep():
+@step_api.route("/deleteStep", methods=("DELETE",))
+def deleteStep():
     body = request.get_json()
-    step = str(body["step"])
+    step_name = str(body["step_name"])
     error = None
 
-    if not step:
+    if not step_name:
         error = "Missing Data"
-    if stepModel.query.filter_by(name=step).first() is None:
-        error = f"No step {step}"
+    if StepModel.query.filter_by(step_name=step_name).first() is None:
+        error = f"No step {step_name}"
 
     if error is None:
-        stepModel.query.filter_by(name=step).delete()
+        StepModel.query.filter_by(step_name=step_name).delete()
         db.session.commit()
-        message = f"step with name {step} removed"
+        message = f"step with name {step_name} removed"
         return jsonify({"status": "ok", "message": message}), 200
     else:
         return jsonify({"status": "bad", "error": error}), 400

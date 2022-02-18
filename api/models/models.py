@@ -11,7 +11,7 @@ class StepModel(db.Model):
     __tablename__ = "steps"
 
     step_name = db.Column(db.String(), primary_key=True)
-    # joints = 
+    joints = db.Column(db.String())
 
     def __init__(self, name, joint):
         self.step_name = name
@@ -27,7 +27,7 @@ class DanceModel(db.Model):
     __tablename__ = "dances"
 
     dance_name = db.Column(db.String(), primary_key=True)
-    # steps = 
+    steps = db.Column(db.String()) 
 
     def __init__(self, name, step):
         self.dance_name = name
