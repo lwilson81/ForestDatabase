@@ -7,6 +7,7 @@ fillDb_api = Blueprint("fillDb_api", __name__)
 
 @fillDb_api.route("/filldb")
 def filldb():
+    # 
     dances = []
     steps = []
 
