@@ -1,10 +1,12 @@
 import os
+from textwrap import fill
 from flask import Flask, flash, render_template
 from dotenv import load_dotenv
 
 from flask_sqlalchemy import SQLAlchemy
 import json
 from flask import request, jsonify, flash
+from steps import *
 
 load_dotenv()
 app = Flask(__name__, static_folder="../build", static_url_path="/")
@@ -27,12 +29,16 @@ db = SQLAlchemy(app)
 class StepModel(db.Model):
     __tablename__ = "steps"
 
-    step_name = db.Column(db.String(16), primary_key=True)
-    joints = db.Column(db.String(16))
+    step_name = db.Column(db.String(255), primary_key=True)
+    start_position = db.Column(db.Text())
+    joint_angles = db.Column(db.Text())
+    joint_times = db.Column(db.Text())
 
-    def __init__(self, name, joint):
+    def __init__(self, name, start, angle, time):
         self.step_name = name
-        self.joints = joint
+        self.start_position = start
+        self.joint_angles = angle
+        self.joint_times = time
 
     def __repr__(self):
         return self.step_name
@@ -43,11 +49,13 @@ class StepModel(db.Model):
 class DanceModel(db.Model):
     __tablename__ = "dances"
 
-    dance_name = db.Column(db.String(16), primary_key=True)
-    steps = db.Column(db.String(16)) 
+    dance_name = db.Column(db.String(255), primary_key=True)
+    start_position = db.Column(db.Text())
+    steps = db.Column(db.Text()) 
 
-    def __init__(self, name, step):
+    def __init__(self, name, start, step):
         self.dance_name = name
+        self.start_position = start
         self.steps = step
 
     def __repr__(self):
@@ -67,18 +75,26 @@ def index():
 
 @app.route("/filldb")
 def filldb():
-    # 
-    dances = []
-    steps = []
 
-    for dance_name in dances:
-        add_dance = DanceModel(dance_name, ___)
-        db.session.add(add_dance)
+    def namestr(obj, namespace):
+        return [name for name in namespace if namespace[name] is obj]
 
-    for step_name in steps:
-        add_step = StepModel(step_name, ___)
+    for step in fill_db_steps:
+        step_name = namestr(step, globals())[0]
+        start_position = {}
+        angles = json.dumps(step[0])
+        times = json.dumps(step[1])
+        add_step = StepModel(step_name, start_position, angles, times)
         db.session.add(add_step)
-
+    
+    for dance in fill_db_dances:
+        dance_name = namestr(dance, globals())[0]
+        start_position = {}
+        steps = dance
+        add_dance = StepModel(dance_name, start_position, steps)
+        db.session.add(add_dance)
+   
+    
     db.session.commit()
     return "db filled"
 
@@ -90,25 +106,25 @@ def matlabtoPython(str_in):
         return stringStep
 
 @app.route("/dance/addDance", methods=("POST", "GET", ))
-def adddance():
+def addDance():
     msg = ""
     
     if request.method == "POST":
         dance_name = request.form["dance_name"]
-        steps = request.form["steps"]
-        steps = matlabtoPython(steps)
-        print(request.form)
-
+        start_pos = matlabtoPython(request.form["start_pos"])
+        steps = matlabtoPython(request.form["steps"])
+        
         if not dance_name:
-            print("hello?")
             msg = ("Dance name is required!")
+        elif not start_pos:
+            msg = ("Start position is required!")
         elif not steps:
             msg = ("Steps are required!")
         elif DanceModel.query.filter_by(dance_name=dance_name).first() is not None:
             msg = (f"Dance {dance_name} already exists")
 
         else:
-            add_dance = DanceModel(dance_name, steps)
+            add_dance = DanceModel(dance_name, start_pos, steps)
             db.session.add(add_dance)
             db.session.commit()
             message = f"Added dance {dance_name} successfully"
@@ -116,16 +132,13 @@ def adddance():
     return render_template("makeDance.html", msg = msg, url="localhost:5000")
 
    
-        
-            
-
 
 @app.route("/dance/getDances", methods=("GET",))
 def getDances():
     response = DanceModel.query.all()
     dances = []
     for item in response:
-        dances.append({"name": item.name})
+        dances.append({"name": item.name, "start_position": item.start_pos, "steps":item.steps})
     return jsonify({"dances": dances}), 200
 
 
@@ -143,7 +156,7 @@ def deleteDance():
     if error is None:
         DanceModel.query.filter_by(dance_name=dance_name).delete()
         db.session.commit()
-        message = f"dance with name {dance_name} removed"
+        message = f"Dance with name {dance_name} removed"
         return jsonify({"status": "ok", "message": message}), 200
     else:
         return jsonify({"status": "bad", "error": error}), 400
@@ -156,19 +169,23 @@ def addStep():
     
     if request.method == "POST":
         step_name = request.form["step_name"]
-        joints = request.form["joints"]
-        joints = matlabtoPython(joints)
-        print(request.form)
+        start_pos = matlabtoPython(request.form["start_pos"])
+        joint_angles = matlabtoPython(request.form["joint_angles"])
+        joint_times = matlabtoPython(request.form["joint_times"])
 
         if not step_name:
             msg = ("Step name is required!")
-        elif not joints:
-            msg = ("Joints are required!")
+        elif not start_pos:
+            msg = ("Start position is required!")
+        elif not joint_angles:
+            msg = ("Joint angles are required!")
+        elif not joint_times:
+            msg = ("Joint times are required!")
         elif StepModel.query.filter_by(step_name=step_name).first() is not None:
             msg = (f"Step {step_name} already exists")
 
         else:
-            add_step = StepModel(step_name, joints)
+            add_step = StepModel(step_name, start_pos, joint_angles, joint_times)
             db.session.add(add_step)
             db.session.commit()
             message = f"Added step {step_name} successfully"
@@ -182,11 +199,13 @@ def addStep():
 def getSteps():
     response = StepModel.query.all()
     steps = []
+
+    # print(response[0].start_position)
     for item in response:
-        steps.append({"step_name": item.step_name, "joints":item.joints})
+        steps.append({"step_name": item.step_name, "start_position": item.start_position, 
+        "joint_angles": item.joint_angles, "joint_times":item.joint_times})
     return jsonify({"steps": steps}), 200
-
-
+    
 @app.route("/step/deleteStep", methods=("DELETE",))
 def deleteStep():
     body = request.get_json()
@@ -201,7 +220,7 @@ def deleteStep():
     if error is None:
         StepModel.query.filter_by(step_name=step_name).delete()
         db.session.commit()
-        message = f"step with name {step_name} removed"
+        message = f"Step with name {step_name} removed"
         return jsonify({"status": "ok", "message": message}), 200
     else:
         return jsonify({"status": "bad", "error": error}), 400

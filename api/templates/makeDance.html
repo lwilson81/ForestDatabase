@@ -10,7 +10,9 @@
             <form class="login-form" method="post">
                 <input type="text" name="dance_name" placeholder="Dance Name"
                     value="{{ request.form['dance_name'] }}" />
-                <input type="text" name="steps" placeholder="Dance String" value="{{ request.form['steps'] }}" />
+                <input type="text" name="start_pos" placeholder="Start Position"
+                    value="{{ request.form['start_pos'] }}" />
+                <input type="text" name="steps" placeholder="Steps" value="{{ request.form['steps'] }}" />
                 <button type="submit">Add Dance</button>
             </form>
         </div>

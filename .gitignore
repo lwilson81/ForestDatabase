@@ -2,4 +2,4 @@
 __pycache__
 *.pyc
 .env
-*.*.pyc
+__pycache__/api.cpython-38.pyc

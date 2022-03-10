@@ -8,9 +8,11 @@
         <div class="form">
 
             <form class="login-form" method="post">
-                <input type="text" name="step_name" placeholder="Step Name"
-                    value="{{ request.form['step_name'] }}" />
-                <input type="text" name="joints" placeholder="Joints" value="{{ request.form['joints'] }}" />
+                <input type="text" name="step_name" placeholder="Step Name" value="{{ request.form['step_name'] }}" />
+                <input type="text" name="start_pos" placeholder="Start Position" value="{{ request.form['start_pos'] }}" />
+                <input type="text" name="joint_angles" placeholder="Joint Angles" value="{{ request.form['joint_angles'] }}" />
+                <input type="text" name="joint_times" placeholder="Joint Times" value="{{ request.form['joint_times'] }}" />
+
                 <button type="submit">Add Step</button>
             </form>
         </div>
