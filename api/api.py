@@ -109,16 +109,15 @@ def matlabtoPython(str_in):
         stringStep = stringStep.replace(';',',')
         # below step replaces anything of type digit -> space -> digit or negative with 
         # digit -> comma -> digit or negative
-        # still doens't match correctly on {[0 -110 0];[15 2 -110 0];0;[30 0 -50 0];0;0;[0 0]}
-        # because "15 2" doesn't allow match for "2 -110" because 2 alreay use
-        # how to get python regex to work on this? 
         # helpful tool for regex: https://pythex.org/
+        stringStep = re.sub(r"(\d)\s(\d|-)", r"\1,\2", stringStep)
+        # have to do it again to get the missing matches from double usage
         stringStep = re.sub(r"(\d)\s(\d|-)", r"\1,\2", stringStep)
     return stringStep
 
 def validateDance(start_pos, steps):
     # validation for dance here
-    return (start_pos, steps)
+    return (matlabtoPython(start_pos), matlabtoPython(steps))
 
 
 @app.route("/dance/addDance", methods=("POST", "GET", ))
@@ -127,8 +126,8 @@ def addDance():
     
     if request.method == "POST":
         dance_name = request.form["dance_name"]
-        start_pos = matlabtoPython(request.form["start_pos"])
-        steps = matlabtoPython(request.form["steps"])
+        start_pos = request.form["start_pos"]
+        steps = request.form["steps"]
         (start_pos, steps) = validateDance(start_pos, steps)
         
         if not dance_name:
@@ -180,7 +179,7 @@ def deleteDance():
 
 def validateStep(start_pos, joint_angles, joint_times):
     # validation for step here
-    return (start_pos, joint_angles, joint_times)
+    return (matlabtoPython(start_pos), matlabtoPython(joint_angles), matlabtoPython(joint_times))
 
 @app.route("/step/addStep", methods=("POST", "GET"))
 def addStep():
@@ -188,9 +187,9 @@ def addStep():
     
     if request.method == "POST":
         step_name = request.form["step_name"]
-        start_pos = matlabtoPython(request.form["start_pos"])
-        joint_angles = matlabtoPython(request.form["joint_angles"])
-        joint_times = matlabtoPython(request.form["joint_times"])
+        start_pos = request.form["start_pos"]
+        joint_angles = request.form["joint_angles"]
+        joint_times = request.form["joint_times"]
         (start_pos, joint_angles, joint_times) = validateStep(start_pos, joint_angles, joint_times)
 
         if not step_name:
