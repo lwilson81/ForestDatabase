@@ -104,16 +104,16 @@ def filldb():
 def matlabtoPython(str_in):
     matlabIndicators = [";", "{", "}"]
     if any(indicator in str_in for indicator in matlabIndicators) or not("," in str_in):
-        stringStep = str_in.replace('{', '[')
-        stringStep = stringStep.replace('}', ']')
-        stringStep = stringStep.replace(';',',')
+        str_in = str_in.replace('{', '[')
+        str_in = str_in.replace('}', ']')
+        str_in = str_in.replace(';',',')
         # below step replaces anything of type digit -> space -> digit or negative with 
         # digit -> comma -> digit or negative
         # helpful tool for regex: https://pythex.org/
-        stringStep = re.sub(r"(\d)\s(\d|-)", r"\1,\2", stringStep)
+        str_in = re.sub(r"(\d)\s(\d|-)", r"\1,\2", str_in)
         # have to do it again to get the missing matches from double usage
-        stringStep = re.sub(r"(\d)\s(\d|-)", r"\1,\2", stringStep)
-    return stringStep
+        str_in = re.sub(r"(\d)\s(\d|-)", r"\1,\2", str_in)
+    return str_in
 
 def validateDance(start_pos, steps):
     # validation for dance here
