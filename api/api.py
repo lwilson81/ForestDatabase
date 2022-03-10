@@ -12,6 +12,8 @@ from steps import *
 load_dotenv()
 app = Flask(__name__, static_folder="../build", static_url_path="/")
 
+# connects database using .env values (if no .env exists, please create one using your
+# SQL Server details using example.env)
 app.secret_key = os.getenv("SECRET_KEY")
 app.config[
     "SQLALCHEMY_DATABASE_URI"
@@ -105,12 +107,19 @@ def matlabtoPython(str_in):
         stringStep = str_in.replace('{', '[')
         stringStep = stringStep.replace('}', ']')
         stringStep = stringStep.replace(';',',')
-        # replaces anything of type digit -> space -> digit or negative with 
+        # below step replaces anything of type digit -> space -> digit or negative with 
         # digit -> comma -> digit or negative
+        # still doens't match correctly on {[0 -110 0];[15 2 -110 0];0;[30 0 -50 0];0;0;[0 0]}
+        # because "15 2" doesn't allow match for "2 -110" because 2 alreay use
+        # how to get python regex to work on this? 
+        # helpful tool for regex: https://pythex.org/
         stringStep = re.sub(r"(\d)\s(\d|-)", r"\1,\2", stringStep)
     return stringStep
-    
-    return stringStep
+
+def validateDance(start_pos, steps):
+    # validation for dance here
+    return (start_pos, steps)
+
 
 @app.route("/dance/addDance", methods=("POST", "GET", ))
 def addDance():
@@ -120,6 +129,7 @@ def addDance():
         dance_name = request.form["dance_name"]
         start_pos = matlabtoPython(request.form["start_pos"])
         steps = matlabtoPython(request.form["steps"])
+        (start_pos, steps) = validateDance(start_pos, steps)
         
         if not dance_name:
             msg = ("Dance name is required!")
@@ -168,7 +178,9 @@ def deleteDance():
     else:
         return jsonify({"status": "bad", "error": error}), 400
 
-
+def validateStep(start_pos, joint_angles, joint_times):
+    # validation for step here
+    return (start_pos, joint_angles, joint_times)
 
 @app.route("/step/addStep", methods=("POST", "GET"))
 def addStep():
@@ -179,6 +191,7 @@ def addStep():
         start_pos = matlabtoPython(request.form["start_pos"])
         joint_angles = matlabtoPython(request.form["joint_angles"])
         joint_times = matlabtoPython(request.form["joint_times"])
+        (start_pos, joint_angles, joint_times) = validateStep(start_pos, joint_angles, joint_times)
 
         if not step_name:
             msg = ("Step name is required!")
