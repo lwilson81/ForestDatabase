@@ -2,6 +2,7 @@ import os
 from textwrap import fill
 from flask import Flask, flash, render_template
 from dotenv import load_dotenv
+import re
 
 from flask_sqlalchemy import SQLAlchemy
 import json
@@ -99,11 +100,17 @@ def filldb():
     return "db filled"
 
 def matlabtoPython(str_in):
+    matlabIndicators = [";", "{", "}"]
+    if any(indicator in str_in for indicator in matlabIndicators) or not("," in str_in):
         stringStep = str_in.replace('{', '[')
         stringStep = stringStep.replace('}', ']')
-        stringStep = stringStep.replace(';',' ')
-        stringStep = stringStep.replace(' ', ',')
-        return stringStep
+        stringStep = stringStep.replace(';',',')
+        # replaces anything of type digit -> space -> digit or negative with 
+        # digit -> comma -> digit or negative
+        stringStep = re.sub(r"(\d)\s(\d|-)", r"\1,\2", stringStep)
+    return stringStep
+    
+    return stringStep
 
 @app.route("/dance/addDance", methods=("POST", "GET", ))
 def addDance():
