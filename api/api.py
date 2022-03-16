@@ -107,7 +107,10 @@ def filldb():
     
     for dance in fill_db_dances:
         dance_name = namestr(dance, globals())[0]
-        start_position = {}
+        try:
+            start_position = json.dumps(dance[2])
+        except:
+            start_position = json.dumps([0,0,0,90,0,0,0])
         steps = dance
         add_dance = DanceModel(dance_name, start_position, steps)
         db.session.add(add_dance)
