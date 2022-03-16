@@ -94,7 +94,7 @@ def filldb():
         dance_name = namestr(dance, globals())[0]
         start_position = {}
         steps = dance
-        add_dance = StepModel(dance_name, start_position, steps)
+        add_dance = DanceModel(dance_name, start_position, steps)
         db.session.add(add_dance)
    
     
