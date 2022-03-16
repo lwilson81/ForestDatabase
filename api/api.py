@@ -81,6 +81,7 @@ def index():
               Add Dance: /dance/addDance\n
               Get Dance: /dance/getDances\n
               Delete Dance: /dance/deleteDance\n
+              Fill Database: /filldb\n
         """
     text = text.replace('\n', '<br>')
     Markup(text).unescape()
@@ -95,7 +96,10 @@ def filldb():
 
     for step in fill_db_steps:
         step_name = namestr(step, globals())[0]
-        start_position = {}
+        try:
+            start_position = json.dumps(step[2])
+        except:
+            start_position = json.dumps([0,0,0,90,0,0,0])
         angles = json.dumps(step[0])
         times = json.dumps(step[1])
         add_step = StepModel(step_name, start_position, angles, times)
