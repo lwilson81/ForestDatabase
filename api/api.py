@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 from flask import request, jsonify, flash
 from steps import *
+from flask import Markup
 
 load_dotenv()
 app = Flask(__name__, static_folder="../build", static_url_path="/")
@@ -74,7 +75,17 @@ def not_found(e):
 
 @app.route("/")
 def index():
-    return "Im here"
+    text = """Add Step: /step/addStep\n
+              Get Step: /step/getSteps\n
+              Delete Step: /step/deleteStep\n
+              Add Dance: /dance/addDance\n
+              Get Dance: /dance/getDances\n
+              Delete Dance: /dance/deleteDance\n
+        """
+    text = text.replace('\n', '<br>')
+    Markup(text).unescape()
+    return text
+
 
 @app.route("/filldb")
 def filldb():
