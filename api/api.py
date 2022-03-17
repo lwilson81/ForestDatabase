@@ -77,11 +77,15 @@ def not_found(e):
 def index():
     db.create_all()
     text = """Add Step: <a href='/step/addStep'>/step/addStep</a>\n
-              Get Step: <a href='/step/getSteps'>/step/getSteps</a>\n
+              Get All Steps: <a href='/step/getSteps'>/step/getSteps</a>\n
+              Get Step: /step/getStep/(step_name)\n
               Delete Step: /step/deleteStep\n
+              Clear Step Table: <a href='/step/clearTable'>/step/clearTable</a>\n
               Add Dance: <a href='/dance/addDance'>/dance/addDance</a>\n
-              Get Dance: <a href='/dance/getDances'>/dance/getDances</a>\n
+              Get All Dances: <a href='/dance/getDances'>/dance/getDances</a>\n
+              Get Dance: /dance/getDance/(dance_name)\n
               Delete Dance: /dance/deleteDance\n
+              Clear Dance Table: <a href='/dance/clearTable'>/dance/clearTable</a>\n
               Fill Database: <a href='/filldb'>/filldb</a>\n
         """
     text = text.replace('\n', '<br>')
@@ -200,6 +204,11 @@ def getDances():
         dances.append({"name": item.dance_name, "start_position": item.start_position, "steps":item.steps})
     return jsonify({"dances": dances}), 200
 
+@app.route('/dance/getDance/<dance_name>')
+def getDance(dance_name):
+    dance = DanceModel.query.filter_by(dance_name=dance_name).first_or_404()
+    return {'dance_name': dance.dance_name, 'start_position': dance.start_position,
+            'steps': dance.steps}
 
 @app.route("/dance/deleteDance", methods=("DELETE",))
 def deleteDance():
@@ -219,6 +228,15 @@ def deleteDance():
         return jsonify({"status": "ok", "message": message}), 200
     else:
         return jsonify({"status": "bad", "error": error}), 400
+
+@app.route("/dance/clearTable")
+def clearDances():
+    response = DanceModel.query.all()
+    for item in response:
+        db.session.query(DanceModel).delete()
+        db.session.commit()
+    return "Dance Table has been cleared"
+
 
 def validateStep(start_pos, joint_angles, joint_times):
     start_pos = matlabtoPython(start_pos)
@@ -314,6 +332,14 @@ def getSteps():
         "joint_angles": item.joint_angles, "joint_times":item.joint_times})
     return jsonify({"steps": steps}), 200
     
+
+@app.route('/step/getStep/<step_name>')
+def getStep(step_name):
+    step = StepModel.query.filter_by(step_name=step_name).first_or_404()
+    return {'step_name': step.step_name, 'start_position': step.start_position,
+            'joint_angles':step.joint_angles, 'joint_times' : step.joint_times}
+
+
 @app.route("/step/deleteStep", methods=("DELETE",))
 def deleteStep():
     body = request.get_json()
@@ -333,3 +359,11 @@ def deleteStep():
     else:
         return jsonify({"status": "bad", "error": error}), 400
 
+
+@app.route("/step/clearTable")
+def clearSteps():
+    response = StepModel.query.all()
+    for item in response:
+        db.session.query(StepModel).delete()
+        db.session.commit()
+    return "Step Table has been cleared"
