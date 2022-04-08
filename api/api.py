@@ -310,6 +310,7 @@ def validateStep(start_pos, joint_angles, joint_times):
             error_msg = f"Joint 7 can't have angles under -360 degrees!"
             return (error_msg, start_pos, joint_angles, joint_times)
     #checks for nested steps
+    #for some reason the negatives are not working for some joints "Operational Error"
     elif any(isinstance(i,list) for i in joint_angles):
         angle_counter = 0
         for angle in joint_angles:
