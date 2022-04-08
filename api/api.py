@@ -1,4 +1,4 @@
---import os
+import os
 from textwrap import fill
 from flask import Flask, flash, render_template
 from dotenv import load_dotenv
@@ -336,7 +336,7 @@ def validateStep(start_pos, joint_angles, joint_times):
                         if ang<-118:
                             error_msg = f"Joint 4 can't have angles under -11 degrees!"
                             return (error_msg, start_pos, joint_angles, joint_times)
-                    elif angle_counter == 5
+                    elif angle_counter == 5:
                         if ang>180:
                             error_msg = f"Joint 6 can't have angles over 180 degrees!"
                             return (error_msg, start_pos, joint_angles, joint_times)
