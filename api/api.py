@@ -269,6 +269,7 @@ def validateStep(start_pos, joint_angles, joint_times):
     angle_counter = 0
     for angle in joint_angles:
         if isinstance(angle, list):
+            ang_counter = 0
             for ang in angle:
                 if angle_counter in [0,2,4,6]:
                     if ang>360:
@@ -298,33 +299,34 @@ def validateStep(start_pos, joint_angles, joint_times):
                     if ang<-97:
                         error_msg = f"Joint 6 can't have angles under -97 degrees!"
                         return (error_msg, start_pos, joint_angles, joint_times)
+
         if isinstance(angle, int):
             if angle_counter in [0,2,4,6]:
-                if ang>360:
+                if angle>360:
                     error_msg = f"Step can't have angles over 360 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
-                if ang<-360:
+                if angle<-360:
                     error_msg = f"Step can't have angles under -360 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
             elif angle_counter == 1:
-                if ang>120:
+                if angle>120:
                     error_msg = f"Joint 2 can't have angles over 120 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
-                if ang<-118:
+                if angle<-118:
                     error_msg = f"Joint 2 can't have angles under -118 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
             elif angle_counter == 3:
-                if ang>225:
+                if angle>225:
                     error_msg = f"Joint 4 can't have angles over 225 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
-                if ang<-118:
+                if angle<-118:
                     error_msg = f"Joint 4 can't have angles under -11 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
             elif angle_counter == 5:
-                if ang>180:
+                if angle>180:
                     error_msg = f"Joint 6 can't have angles over 180 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
-                if ang<-97:
+                if angle<-97:
                     error_msg = f"Joint 6 can't have angles under -97 degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
         angle_counter += 1
