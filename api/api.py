@@ -237,12 +237,19 @@ def clearDances():
         db.session.commit()
     return "Dance Table has been cleared"
 
-
+ang_constraints = [
+            (-360, 360),
+            (-118, 120),
+            (-360, 360),
+            (-118, 225),
+            (-360, 360),
+            (-97, 180),
+            (-360, 360)
+        ]
 def validateStep(start_pos, joint_angles, joint_times):
     start_pos = matlabtoPython(start_pos)
     joint_angles = matlabtoPython(joint_angles)
     joint_times = matlabtoPython(joint_times)
-
 
     error_msg = None
     if len(start_pos)!=7:
@@ -258,87 +265,52 @@ def validateStep(start_pos, joint_angles, joint_times):
     for joint_num in range(7):
         time = joint_times[joint_num]
         angle = joint_angles[joint_num]
-        if isinstance(time, list)!=isinstance(angle, list):
-            error_msg = f"Make sure each joint's angles and times have the same length!"
-            return (error_msg, start_pos, joint_angles, joint_times)
-        if isinstance(time, list):
-            for ins in range(len(time)):
-                vel = angle[ins]/time[ins]
-                if vel>180:
-                    error_msg = f"A movement for angle {joint_num} is too fast"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-
+        lower_bound= ang_constraints[joint_num][0]
+        upper_bound = ang_constraints[joint_num][1]
 
         if isinstance(time, list):
+            if not isinstance(angle, list) or (len(time)!=len(angle)):
+                error_msg = f"Make sure each joint's angles and times have the same length!"
+                return (error_msg, start_pos, joint_angles, joint_times)
+
             for tim in time:
                 if tim<=0:
-                    error_msg = f"Step can't have 0 time angles!"
+                    error_msg = f"Step can't have 0 or negative times!"
                     return (error_msg, start_pos, joint_angles, joint_times)
+
+            for ang in angle:
+                if ang>upper_bound:
+                    error_msg = f"Joint {joint_num+1} can't have angles over {upper_bound} degrees!"
+                    return (error_msg, start_pos, joint_angles, joint_times)
+                if ang<lower_bound:
+                    error_msg = f"Joint {joint_num+1} can't have angles under {lower_bound} degrees!"
+                    return (error_msg, start_pos, joint_angles, joint_times)
+
+            for ins in range(len(time)):
+                vel = angle[ins]/time[ins]
+                if vel>=180 or vel<=-180:
+                    error_msg = f"One of the movements for angle {joint_num+1} is too fast"
+                    return (error_msg, start_pos, joint_angles, joint_times)
+
+
         else:
             if time<=0:
                 error_msg = f"Step can't have 0 time angles!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
-        if isinstance(angle, list):
-            for ang in angle:
-                if joint_num in [0,2,4,6]:
-                    if ang>360:
-                        error_msg = f"Step can't have angles over 360 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                    if ang<-360:
-                        error_msg = f"Step can't have angles under -360 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                elif joint_num == 1:
-                    if ang>120:
-                        error_msg = f"Joint 2 can't have angles over 120 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                    if ang<-118:
-                        error_msg = f"Joint 2 can't have angles under -118 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                elif joint_num == 3:
-                    if ang>225:
-                        error_msg = f"Joint 4 can't have angles over 225 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                    if ang<-118:
-                        error_msg = f"Joint 4 can't have angles under -11 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                elif joint_num == 5:
-                    if ang>180:
-                        error_msg = f"Joint 6 can't have angles over 180 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-                    if ang<-97:
-                        error_msg = f"Joint 6 can't have angles under -97 degrees!"
-                        return (error_msg, start_pos, joint_angles, joint_times)
-
-        if isinstance(angle, int):
-            if joint_num in [0,2,4,6]:
-                if angle>360:
-                    error_msg = f"Step can't have angles over 360 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-                if angle<-360:
-                    error_msg = f"Step can't have angles under -360 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-            elif joint_num == 1:
-                if angle>120:
-                    error_msg = f"Joint 2 can't have angles over 120 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-                if angle<-118:
-                    error_msg = f"Joint 2 can't have angles under -118 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-            elif joint_num == 3:
-                if angle>225:
-                    error_msg = f"Joint 4 can't have angles over 225 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-                if angle<-118:
-                    error_msg = f"Joint 4 can't have angles under -11 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-            elif joint_num == 5:
-                if angle>180:
-                    error_msg = f"Joint 6 can't have angles over 180 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
-                if angle<-97:
-                    error_msg = f"Joint 6 can't have angles under -97 degrees!"
-                    return (error_msg, start_pos, joint_angles, joint_times)
+            if angle>upper_bound:
+                error_msg = f"Step {joint_num+1} can't have angles over {upper_bound} degrees!"
+                return (error_msg, start_pos, joint_angles, joint_times)
+            if angle<lower_bound:
+                error_msg = f"Step {joint_num+1} can't have angles under {lower_bound} degrees!"
+                return (error_msg, start_pos, joint_angles, joint_times)
+            
+            vel = angle/time
+            if vel>=180 or vel<=-180:
+                error_msg = f"A movement for angle {joint_num} is too fast"
+                return (error_msg, start_pos, joint_angles, joint_times)
+            
+        
 
     return (error_msg, json.dumps(start_pos), json.dumps(joint_angles), json.dumps(joint_times))
 
