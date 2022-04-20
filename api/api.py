@@ -30,6 +30,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+
 class StepModel(db.Model):
     __tablename__ = "steps"
 
@@ -55,7 +56,7 @@ class DanceModel(db.Model):
 
     dance_name = db.Column(db.String(255), primary_key=True)
     start_position = db.Column(db.Text())
-    steps = db.Column(db.Text()) 
+    steps = db.Column(db.Text())
 
     def __init__(self, name, start, step):
         self.dance_name = name
@@ -104,33 +105,33 @@ def filldb():
         try:
             start_position = json.dumps(step[2])
         except:
-            start_position = json.dumps([0,0,0,90,0,0,0])
+            start_position = json.dumps([0, 0, 0, 90, 0, 0, 0])
         angles = json.dumps(step[0])
         times = json.dumps(step[1])
         add_step = StepModel(step_name, start_position, angles, times)
         db.session.add(add_step)
-    
+
     for dance in fill_db_dances:
         dance_name = namestr(dance, globals())[0]
         try:
             start_position = json.dumps(dance[2])
         except:
-            start_position = json.dumps([0,0,0,90,0,0,0])
+            start_position = json.dumps([0, 0, 0, 90, 0, 0, 0])
         steps = dance
         add_dance = DanceModel(dance_name, start_position, steps)
         db.session.add(add_dance)
-   
-    
+
     db.session.commit()
     return "db filled"
+
 
 def matlabtoPython(str_in):
     matlabIndicators = [";", "{", "}"]
     if any(indicator in str_in for indicator in matlabIndicators) or not("," in str_in):
         str_in = str_in.replace('{', '[')
         str_in = str_in.replace('}', ']')
-        str_in = str_in.replace(';',',')
-        # below step replaces anything of type digit -> space -> digit or negative with 
+        str_in = str_in.replace(';', ',')
+        # below step replaces anything of type digit -> space -> digit or negative with
         # digit -> comma -> digit or negative
         # helpful tool for regex: https://pythex.org/
         str_in = re.sub(r"(\d)\s(\d|-)", r"\1,\2", str_in)
@@ -140,18 +141,19 @@ def matlabtoPython(str_in):
     #     str_in.replace
     return json.loads(str_in)
 
+
 def validateDance(start_pos, steps):
     start_pos = matlabtoPython(start_pos)
     steps = matlabtoPython(steps)
     error_msg = None
-    if len(start_pos)!=7:
+    if len(start_pos) != 7:
         error_msg = f"Provide start position for the 7 joints!"
         return (error_msg, start_pos, joint_angles, joint_times)
     for pos in start_pos:
-        if pos>360:
-                error_msg = f"Start position can't be over 360 degrees!"
-                return (error_msg, start_pos, joint_angles, joint_times)
-        if pos<-360:
+        if pos > 360:
+            error_msg = f"Start position can't be over 360 degrees!"
+            return (error_msg, start_pos, joint_angles, joint_times)
+        if pos < -360:
             error_msg = f"Start position can't be under -360 degrees!"
             return (error_msg, start_pos, joint_angles, joint_times)
 
@@ -160,19 +162,18 @@ def validateDance(start_pos, steps):
             error_msg = f"Step {step} does not exist yet!"
             return (error_msg, start_pos, steps)
 
-
     return (error_msg, json.dumps(start_pos), json.dumps(steps))
 
 
 @app.route("/dance/addDance", methods=("POST", "GET", ))
 def addDance():
     msg = ""
-    
+
     if request.method == "POST":
         dance_name = request.form["dance_name"]
         start_pos = request.form["start_pos"]
         steps = request.form["steps"]
-        
+
         if not dance_name:
             msg = ("Dance name is required!")
         elif not start_pos:
@@ -181,7 +182,7 @@ def addDance():
             msg = ("Steps are required!")
         elif DanceModel.query.filter_by(dance_name=dance_name).first() is not None:
             msg = (f"Dance {dance_name} already exists")
-        
+
         else:
             (error, start_pos, steps) = validateDance(start_pos, steps)
             if error:
@@ -192,23 +193,25 @@ def addDance():
                 db.session.commit()
                 message = f"Added dance {dance_name} successfully"
                 msg = (message)
-    return render_template("makeDance.html", msg = msg, url="localhost:5000")
+    return render_template("makeDance.html", msg=msg, url="localhost:5000")
 
-   
 
 @app.route("/dance/getDances", methods=("GET",))
 def getDances():
     response = DanceModel.query.all()
     dances = []
     for item in response:
-        dances.append({"name": item.dance_name, "start_position": item.start_position, "steps":item.steps})
+        dances.append({"name": item.dance_name,
+                      "start_position": item.start_position, "steps": item.steps})
     return jsonify({"dances": dances}), 200
+
 
 @app.route('/dance/getDance/<dance_name>')
 def getDance(dance_name):
     dance = DanceModel.query.filter_by(dance_name=dance_name).first_or_404()
     return {'dance_name': dance.dance_name, 'start_position': dance.start_position,
             'steps': dance.steps}
+
 
 @app.route("/dance/deleteDance", methods=("DELETE",))
 def deleteDance():
@@ -229,6 +232,7 @@ def deleteDance():
     else:
         return jsonify({"status": "bad", "error": error}), 400
 
+
 @app.route("/dance/clearTable")
 def clearDances():
     response = DanceModel.query.all()
@@ -237,93 +241,94 @@ def clearDances():
         db.session.commit()
     return "Dance Table has been cleared"
 
+
 ang_constraints = [
-            (-360, 360),
-            (-118, 120),
-            (-360, 360),
-            (-118, 225),
-            (-360, 360),
-            (-97, 180),
-            (-360, 360)
-        ]
+    (-360, 360),
+    (-118, 120),
+    (-360, 360),
+    (-118, 225),
+    (-360, 360),
+    (-97, 180),
+    (-360, 360)
+]
+
+
 def validateStep(start_pos, joint_angles, joint_times):
     start_pos = matlabtoPython(start_pos)
     joint_angles = matlabtoPython(joint_angles)
     joint_times = matlabtoPython(joint_times)
 
     error_msg = None
-    if len(start_pos)!=7:
+    if len(start_pos) != 7:
         error_msg = f"Provide start position for all 7 joints! Missing {7-len(start_pos)} joints"
         return (error_msg, start_pos, joint_angles, joint_times)
-    if len(joint_angles)!=7:
+    if len(joint_angles) != 7:
         error_msg = f"Provide angles for all 7 joints! Missing {7-len(joint_angles)} joints"
         return (error_msg, start_pos, joint_angles, joint_times)
-    if len(joint_times)!=7:
+    if len(joint_times) != 7:
         error_msg = f"Provide times for all 7 joints! Missing {7-len(joint_times)} joints"
         return (error_msg, start_pos, joint_angles, joint_times)
-    
+
     for joint_num in range(7):
         time = joint_times[joint_num]
         angle = joint_angles[joint_num]
-        lower_bound= ang_constraints[joint_num][0]
+        lower_bound = ang_constraints[joint_num][0]
         upper_bound = ang_constraints[joint_num][1]
 
         if isinstance(time, list):
-            if not isinstance(angle, list) or (len(time)!=len(angle)):
+            if not isinstance(angle, list) or (len(time) != len(angle)):
                 error_msg = f"Joint {joint_num+1}'s angles and times have different lengths!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
             for tim in time:
-                if tim<=0:
+                if tim <= 0:
                     error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
             for ang in angle:
-                if ang>upper_bound:
+                if ang > upper_bound:
                     error_msg = f"Joint {joint_num+1} can't have angles over {upper_bound} degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
-                if ang<lower_bound:
+                if ang < lower_bound:
                     error_msg = f"Joint {joint_num+1} can't have angles under {lower_bound} degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
             for ins in range(len(time)):
                 vel = angle[ins]/time[ins]
-                if vel>=180 or vel<=-180:
+                if vel >= 180 or vel <= -180:
                     error_msg = f"One of the movements for angle {joint_num+1} is too fast"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
-
         else:
-            if time<=0:
+            if time <= 0:
                 error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
-            if angle>upper_bound:
+            if angle > upper_bound:
                 error_msg = f"Step {joint_num+1} can't have angles over {upper_bound} degrees!"
                 return (error_msg, start_pos, joint_angles, joint_times)
-            if angle<lower_bound:
+            if angle < lower_bound:
                 error_msg = f"Step {joint_num+1} can't have angles under {lower_bound} degrees!"
                 return (error_msg, start_pos, joint_angles, joint_times)
-            
+
             vel = angle/time
-            if vel>=180 or vel<=-180:
+            if vel >= 180 or vel <= -180:
                 error_msg = f"One of the movements for angle {joint_num+1} is too fast"
                 return (error_msg, start_pos, joint_angles, joint_times)
-            
-        
 
     return (error_msg, json.dumps(start_pos), json.dumps(joint_angles), json.dumps(joint_times))
+
 
 @app.route("/step/addStep", methods=("POST", "GET"))
 def addStep():
     msg = ""
-    
+
     if request.method == "POST":
         step_name = request.form["step_name"]
         start_pos = request.form["start_pos"]
         joint_angles = request.form["joint_angles"]
         joint_times = request.form["joint_times"]
-        
+
         if not step_name:
             msg = ("Step name is required!")
         elif not start_pos:
@@ -335,20 +340,19 @@ def addStep():
         elif StepModel.query.filter_by(step_name=step_name).first() is not None:
             msg = (f"Step {step_name} already exists")
 
-
         if not msg:
-            (error_msg, start_pos, joint_angles, joint_times) = validateStep(start_pos, joint_angles, joint_times)
+            (error_msg, start_pos, joint_angles, joint_times) = validateStep(
+                start_pos, joint_angles, joint_times)
             if not error_msg:
-                add_step = StepModel(step_name, start_pos, joint_angles, joint_times)
+                add_step = StepModel(step_name, start_pos,
+                                     joint_angles, joint_times)
                 db.session.add(add_step)
                 db.session.commit()
                 message = f"Added step {step_name} successfully"
                 msg = (message)
             else:
                 msg = error_msg
-    return render_template("makeStep.html", msg = msg, url="localhost:5000")
-
-    
+    return render_template("makeStep.html", msg=msg, url="localhost:5000")
 
 
 @app.route("/step/getSteps", methods=("GET",))
@@ -358,16 +362,16 @@ def getSteps():
 
     # print(response[0].start_position)
     for item in response:
-        steps.append({"step_name": item.step_name, "start_position": item.start_position, 
-        "joint_angles": item.joint_angles, "joint_times":item.joint_times})
+        steps.append({"step_name": item.step_name, "start_position": item.start_position,
+                      "joint_angles": item.joint_angles, "joint_times": item.joint_times})
     return jsonify({"steps": steps}), 200
-    
+
 
 @app.route('/step/getStep/<step_name>')
 def getStep(step_name):
     step = StepModel.query.filter_by(step_name=step_name).first_or_404()
     return {'step_name': step.step_name, 'start_position': step.start_position,
-            'joint_angles':step.joint_angles, 'joint_times' : step.joint_times}
+            'joint_angles': step.joint_angles, 'joint_times': step.joint_times}
 
 
 @app.route("/step/deleteStep", methods=("DELETE",))
