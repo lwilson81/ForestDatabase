@@ -253,13 +253,13 @@ def validateStep(start_pos, joint_angles, joint_times):
 
     error_msg = None
     if len(start_pos)!=7:
-        error_msg = f"Provide start position for the 7 joints!"
+        error_msg = f"Provide start position for all 7 joints! Missing {7-len(start_pos)} joints"
         return (error_msg, start_pos, joint_angles, joint_times)
     if len(joint_angles)!=7:
-        error_msg = f"Provide angles for the 7 joints!"
+        error_msg = f"Provide angles for all 7 joints! Missing {7-len(joint_angles)} joints"
         return (error_msg, start_pos, joint_angles, joint_times)
     if len(joint_times)!=7:
-        error_msg = f"Provide times for the 7 joints!"
+        error_msg = f"Provide times for all 7 joints! Missing {7-len(joint_times)} joints"
         return (error_msg, start_pos, joint_angles, joint_times)
     
     for joint_num in range(7):
@@ -270,12 +270,12 @@ def validateStep(start_pos, joint_angles, joint_times):
 
         if isinstance(time, list):
             if not isinstance(angle, list) or (len(time)!=len(angle)):
-                error_msg = f"Make sure each joint's angles and times have the same length!"
+                error_msg = f"Joint {joint_num+1}'s angles and times have different lengths!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
             for tim in time:
                 if tim<=0:
-                    error_msg = f"Step can't have 0 or negative times!"
+                    error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
             for ang in angle:
@@ -295,7 +295,7 @@ def validateStep(start_pos, joint_angles, joint_times):
 
         else:
             if time<=0:
-                error_msg = f"Step can't have 0 time angles!"
+                error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
             if angle>upper_bound:
@@ -307,7 +307,7 @@ def validateStep(start_pos, joint_angles, joint_times):
             
             vel = angle/time
             if vel>=180 or vel<=-180:
-                error_msg = f"A movement for angle {joint_num} is too fast"
+                error_msg = f"One of the movements for angle {joint_num+1} is too fast"
                 return (error_msg, start_pos, joint_angles, joint_times)
             
         
