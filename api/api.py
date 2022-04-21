@@ -281,7 +281,7 @@ def validateStep(start_pos, joint_angles, joint_times):
                 return (error_msg, start_pos, joint_angles, joint_times)
 
             for tim in time:
-                if tim <= 0:
+                if tim < 0:
                     error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
