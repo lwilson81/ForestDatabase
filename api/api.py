@@ -170,9 +170,10 @@ def addDance():
     msg = ""
 
     if request.method == "POST":
-        dance_name = request.form["dance_name"]
-        start_pos = request.form["start_pos"]
-        steps = request.form["steps"]
+        body = request.get_json()
+        dance_name = (str(body["dance_name"])) if (str(body["dance_name"])) else (request.form["dance_name"])
+        start_pos = (str(body["start_pos"])) if (str(body["start_pos"])) else (request.form["start_pos"])
+        steps = (str(body["steps"])) if (str(body["steps"])) else (request.form["steps"])
 
         if not dance_name:
             msg = ("Dance name is required!")
@@ -324,10 +325,11 @@ def addStep():
     msg = ""
 
     if request.method == "POST":
-        step_name = request.form["step_name"]
-        start_pos = request.form["start_pos"]
-        joint_angles = request.form["joint_angles"]
-        joint_times = request.form["joint_times"]
+        body = request.get_json()
+        step_name = (str(body["step_name"])) if (str(body["step_name"])) else (request.form["step_name"])
+        start_pos = (str(body["start_pos"])) if (str(body["start_pos"])) else (request.form["start_pos"])
+        joint_angles = (str(body["joint_angles"])) if (str(body["joint_angles"])) else (request.form["joint_angles"])
+        joint_times = (str(body["joint_times"])) if (str(body["joint_times"])) else (request.form["joint_times"])
 
         if not step_name:
             msg = ("Step name is required!")
