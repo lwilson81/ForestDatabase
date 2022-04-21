@@ -280,12 +280,13 @@ def validateStep(start_pos, joint_angles, joint_times):
                 error_msg = f"Joint {joint_num+1}'s angles and times have different lengths!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
-            for tim in time:
+            for ins in range(len(time)):   
+                tim = time[ins]    
+                ang = angle[ins] 
                 if tim < 0:
                     error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
-            for ang in angle:
                 if ang > upper_bound:
                     error_msg = f"Joint {joint_num+1} can't have angles over {upper_bound} degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
@@ -293,7 +294,6 @@ def validateStep(start_pos, joint_angles, joint_times):
                     error_msg = f"Joint {joint_num+1} can't have angles under {lower_bound} degrees!"
                     return (error_msg, start_pos, joint_angles, joint_times)
 
-            for ins in range(len(time)):
                 vel = angle[ins]/time[ins]
                 if vel >= 180 or vel <= -180:
                     error_msg = f"One of the movements for angle {joint_num+1} is too fast"
