@@ -16,15 +16,17 @@ app = Flask(__name__, static_folder="../build", static_url_path="/")
 # connects database using .env values (if no .env exists, please create one using your
 # SQL Server details using example.env)
 app.secret_key = os.getenv("SECRET_KEY")
-app.config[
-    "SQLALCHEMY_DATABASE_URI"
-] = "mysql://{username}:{password}@{host}:{port}/{db_name}".format(
-    username=os.getenv("MYSQL_USER"),
-    password=os.getenv("MYSQL_PASSWORD"),
-    host=os.getenv("MYSQL_HOST"),
-    port=os.getenv("MYSQL_POST"),
-    db_name=os.getenv("MYSQL_DB"),
-)
+# app.config[
+#     "SQLALCHEMY_DATABASE_URI"
+# ] = "mysql://{username}:{password}@{host}:{port}/{db_name}".format(
+#     username=os.getenv("MYSQL_USER"),
+#     password=os.getenv("MYSQL_PASSWORD"),
+#     host=os.getenv("MYSQL_HOST"),
+#     port=os.getenv("MYSQL_POST"),
+#     db_name=os.getenv("MYSQL_DB"),
+# )
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
+
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -171,9 +173,9 @@ def addDance():
 
     if request.method == "POST":
         body = request.get_json()
-        dance_name = (str(body["dance_name"])) if (str(body["dance_name"])) else (request.form["dance_name"])
-        start_pos = (str(body["start_pos"])) if (str(body["start_pos"])) else (request.form["start_pos"])
-        steps = (str(body["steps"])) if (str(body["steps"])) else (request.form["steps"])
+        dance_name = (str(body["dance_name"])) if body else (request.form["dance_name"])
+        start_pos = (str(body["start_pos"])) if body else (request.form["start_pos"])
+        steps = (str(body["steps"])) if body else (request.form["steps"])
 
         if not dance_name:
             msg = ("Dance name is required!")
@@ -326,10 +328,10 @@ def addStep():
 
     if request.method == "POST":
         body = request.get_json()
-        step_name = (str(body["step_name"])) if (str(body["step_name"])) else (request.form["step_name"])
-        start_pos = (str(body["start_pos"])) if (str(body["start_pos"])) else (request.form["start_pos"])
-        joint_angles = (str(body["joint_angles"])) if (str(body["joint_angles"])) else (request.form["joint_angles"])
-        joint_times = (str(body["joint_times"])) if (str(body["joint_times"])) else (request.form["joint_times"])
+        step_name = (str(body["step_name"])) if body else (request.form["step_name"])
+        start_pos = (str(body["start_pos"])) if body else (request.form["start_pos"])
+        joint_angles = (str(body["joint_angles"])) if body else (request.form["joint_angles"])
+        joint_times = (str(body["joint_times"])) if body else (request.form["joint_times"])
 
         if not step_name:
             msg = ("Step name is required!")
