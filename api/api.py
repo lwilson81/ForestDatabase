@@ -75,25 +75,18 @@ class DanceModel(db.Model):
 def not_found(e):
     return "Not found"
 
+@app.route("/dance/makeCSV", methods=("POST", "GET", ))
+def makeCSV():
+    msg=""
+    if request.method=="POST":
+        dance_name = (str(body["dance_name"])) if body else (request.form["dance_name"])
+        dance = DanceModel.query.filter_by(dance_name=dance_name).first_or_404()
+    
+    # return {'dance_name': dance.dance_name, 'start_position': dance.start_position,
+    #         'steps': dance.steps}
+    
+    return render_template("makeCSV.html", msg=msg, url="localhost:5000")
 
-@app.route("/")
-def index():
-    db.create_all()
-    text = """Add Step: <a href='/step/addStep'>/step/addStep</a>\n
-              Get All Steps: <a href='/step/getSteps'>/step/getSteps</a>\n
-              Get Step: /step/getStep/(step_name)\n
-              Delete Step: /step/deleteStep\n
-              Clear Step Table: <a href='/step/clearTable'>/step/clearTable</a>\n
-              Add Dance: <a href='/dance/addDance'>/dance/addDance</a>\n
-              Get All Dances: <a href='/dance/getDances'>/dance/getDances</a>\n
-              Get Dance: /dance/getDance/(dance_name)\n
-              Delete Dance: /dance/deleteDance\n
-              Clear Dance Table: <a href='/dance/clearTable'>/dance/clearTable</a>\n
-              Fill Database: <a href='/filldb'>/filldb</a>\n
-        """
-    text = text.replace('\n', '<br>')
-    Markup(text).unescape()
-    return text
 
 
 @app.route("/filldb")
@@ -125,6 +118,29 @@ def filldb():
 
     db.session.commit()
     return "db filled"
+
+@app.route("/")
+def index():
+    db.create_all()
+    # filldb()
+    text = """Add Step: <a href='/step/addStep'>/step/addStep</a>\n
+              Get All Steps: <a href='/step/getSteps'>/step/getSteps</a>\n
+              Get Step: /step/getStep/(step_name)\n
+              Delete Step: /step/deleteStep\n
+              Clear Step Table: <a href='/step/clearTable'>/step/clearTable</a>\n
+              Add Dance: <a href='/dance/addDance'>/dance/addDance</a>\n
+              Get All Dances: <a href='/dance/getDances'>/dance/getDances</a>\n
+              Get Dance: /dance/getDance/(dance_name)\n
+              Delete Dance: /dance/deleteDance\n
+              Clear Dance Table: <a href='/dance/clearTable'>/dance/clearTable</a>\n
+              Fill Database: <a href='/filldb'>/filldb</a>\n
+        """
+    text = text.replace('\n', '<br>')
+    Markup(text).unescape()
+    return text
+
+
+
 
 
 def matlabtoPython(str_in):
