@@ -1,13 +1,17 @@
+from asyncio import queues
 import os
+import queue
 from textwrap import fill
-from flask import Flask, flash, render_template
+from flask import Flask, flash, render_template, make_response
 from dotenv import load_dotenv
 import re
+import numpy as np
 
 from flask_sqlalchemy import SQLAlchemy
 import json
 from flask import request, jsonify, flash
 from steps import *
+from live_trajectory_generation import *
 from flask import Markup
 
 load_dotenv()
@@ -25,7 +29,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 #     port=os.getenv("MYSQL_POST"),
 #     db_name=os.getenv("MYSQL_DB"),
 # )
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.sqlite3'
 
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -75,18 +79,108 @@ class DanceModel(db.Model):
 def not_found(e):
     return "Not found"
 
+def find_num_entries(times):
+    time = []
+    for tim in times:  
+        if isinstance(tim, list):
+            time.append(sum(tim))
+        else:
+            time.append(tim)
+    return max(time)
+
 @app.route("/dance/makeCSV", methods=("POST", "GET", ))
 def makeCSV():
-    msg=""
-    if request.method=="POST":
-        dance_name = (str(body["dance_name"])) if body else (request.form["dance_name"])
-        dance = DanceModel.query.filter_by(dance_name=dance_name).first_or_404()
-    
-    # return {'dance_name': dance.dance_name, 'start_position': dance.start_position,
-    #         'steps': dance.steps}
-    
-    return render_template("makeCSV.html", msg=msg, url="localhost:5000")
+    msg = ""
+    if request.method == "POST":
+        body = request.get_json()
+        dance_name = (str(body["dance_name"])) if body else (
+            request.form["dance_name"])
+        dance = DanceModel.query.filter_by(
+            dance_name=dance_name).first_or_404()
+        dance_start_pos = json.loads(dance.start_position)
+        
+        steps = dance.steps
 
+        steps = steps.replace("[", "")
+        steps = steps.replace("]", "")
+        steps = steps.replace("\"", "")
+        steps = steps.split(",")
+        step_joints = []
+        step_times = []
+        step_starts = []
+        num_steps = len(steps)
+        for step in steps:
+            step_name = step.replace(" ", "")
+            step = StepModel.query.filter_by(
+                step_name=step_name).first_or_404()
+            step_joints.append(json.loads(step.joint_angles))
+            step_times.append(json.loads(step.joint_times))
+            step_starts.append(json.loads(step.start_position))
+        # print(step_joints)
+        # print("~~~")
+        # print(step_times)
+
+        for step_num in range(num_steps):
+            for i in range(len(step_joints[step_num])):
+                item = step_joints[step_num][i]
+                item2 = step_times[step_num][i]
+                if not isinstance(item, list):
+                    step_joints[step_num][i]=[item]
+                if not isinstance(item2, list):
+                    step_times[step_num][i]=[item2]
+
+        que = queue.Queue()
+
+        curr_pos = dance_start_pos
+        que.put(curr_pos)
+        for step_num in range(num_steps):
+            curr_pos = step_starts[step_num]
+            # [0, -110, 0], [15, 2, -50, 0], 0, [30, 0, -50, 0], 0, 0, [0, 0]]
+            step_joint = step_joints[step_num]
+            step_time = step_times[step_num]
+            num_que_entries = find_num_entries(step_time)
+            que_adds = [[None for _ in range(7)] for _ in range(num_que_entries+1)]
+            que_adds[0]=curr_pos
+            # within each step, split into joints
+            for joint_num in range(7):
+                # each [15, 2, -50, 0] same joint different phases
+                curr_joint_val = curr_pos[joint_num]
+                joint_angs = step_joint[joint_num]
+                joint_times = step_time[joint_num]
+                num_phases = len(joint_angs)
+                # within each joint, split into phases: 15 in [15, 2, -50, 0]
+                # corresponds to [2, 1, 2, 1]
+                curr_que_num=1
+                for phase_num in range(num_phases):
+                    phase_ang = joint_angs[phase_num]
+                    phase_time = joint_times[phase_num]
+                    change = phase_ang/phase_time
+                    for _ in range(phase_time):
+                    # within each phase, split into time slices of 1
+                        curr_joint_val+=change
+                        que_adds[curr_que_num][joint_num]=curr_joint_val
+                        curr_que_num+=1
+
+            for entry_num in range(num_que_entries):
+                for joint_num in range(7):
+                    if que_adds[entry_num][joint_num] == None:
+                        que_adds[entry_num-1][joint_num]
+            for cont in que_adds:
+                que.put(cont)
+            # for cont in que_adds:
+            #     que.append(cont)
+      
+        csv = 'Joint1, Joint2, Joint3, Joint4, Joint5, Joint6, Joint7\n'
+
+
+        csv += change_joints(que, dance_start_pos, dance_name)
+        response = make_response(csv)
+        cd = 'attachment; filename=%s.csv' % (dance_name,)
+        response.headers['Content-Disposition'] = cd
+        response.mimetype = 'text/csv'
+        return response
+
+    return render_template("makeCSV.html", msg=msg, url="localhost:5000")
 
 
 @app.route("/filldb")
@@ -119,6 +213,7 @@ def filldb():
     db.session.commit()
     return "db filled"
 
+
 @app.route("/")
 def index():
     db.create_all()
@@ -138,9 +233,6 @@ def index():
     text = text.replace('\n', '<br>')
     Markup(text).unescape()
     return text
-
-
-
 
 
 def matlabtoPython(str_in):
@@ -189,8 +281,10 @@ def addDance():
 
     if request.method == "POST":
         body = request.get_json()
-        dance_name = (str(body["dance_name"])) if body else (request.form["dance_name"])
-        start_pos = (str(body["start_pos"])) if body else (request.form["start_pos"])
+        dance_name = (str(body["dance_name"])) if body else (
+            request.form["dance_name"])
+        start_pos = (str(body["start_pos"])) if body else (
+            request.form["start_pos"])
         steps = (str(body["steps"])) if body else (request.form["steps"])
 
         if not dance_name:
@@ -299,9 +393,9 @@ def validateStep(start_pos, joint_angles, joint_times):
                 error_msg = f"Joint {joint_num+1}'s angles and times have different lengths!"
                 return (error_msg, start_pos, joint_angles, joint_times)
 
-            for ins in range(len(time)):   
-                tim = time[ins]    
-                ang = angle[ins] 
+            for ins in range(len(time)):
+                tim = time[ins]
+                ang = angle[ins]
                 if tim < 0:
                     error_msg = f"Angle {joint_num+1} has a zero or negative time!"
                     return (error_msg, start_pos, joint_angles, joint_times)
@@ -342,12 +436,21 @@ def validateStep(start_pos, joint_angles, joint_times):
 def addStep():
     msg = ""
 
+# curl --header "Content-Type: application/json" \
+#   --request POST \
+#   --data '{"step_name":"sendit","start_pos":[3, 3, 3, 3, 3, 3, 3], "joint_angles":[[0, -110, 0], [15, 2, -50, 0], 0, [30, 0, -50, 0], 0, 0, [0, 0]], "joint_times":[[1, 3, 2], [2, 1, 2, 1], 6, [2, 1, 2, 1], 6, 6, [2, 4]]}' \
+#   http://127.0.0.1:5000/step/addStep
+
     if request.method == "POST":
         body = request.get_json()
-        step_name = (str(body["step_name"])) if body else (request.form["step_name"])
-        start_pos = (str(body["start_pos"])) if body else (request.form["start_pos"])
-        joint_angles = (str(body["joint_angles"])) if body else (request.form["joint_angles"])
-        joint_times = (str(body["joint_times"])) if body else (request.form["joint_times"])
+        step_name = (str(body["step_name"])) if body else (
+            request.form["step_name"])
+        start_pos = (str(body["start_pos"])) if body else (
+            request.form["start_pos"])
+        joint_angles = (str(body["joint_angles"])) if body else (
+            request.form["joint_angles"])
+        joint_times = (str(body["joint_times"])) if body else (
+            request.form["joint_times"])
 
         if not step_name:
             msg = ("Step name is required!")
@@ -366,6 +469,8 @@ def addStep():
             if not error_msg:
                 add_step = StepModel(step_name, start_pos,
                                      joint_angles, joint_times)
+                print(step_name, start_pos,
+                      joint_angles, joint_times)
                 db.session.add(add_step)
                 db.session.commit()
                 message = f"Added step {step_name} successfully"
