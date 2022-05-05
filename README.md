@@ -14,7 +14,8 @@ pip3 install -r requirements.txt
 ## Usage
 
 
-Create your very own .env file using env.sample as a template!
+Create your very own .env file using env.sample as a template! The app currently using SQLite for easier
+testing for our front-end, so for now, this step isn't required.
 
 CD in API directory and start flask
 ```bash

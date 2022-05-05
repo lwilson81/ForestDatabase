@@ -5,7 +5,7 @@ def change_joints(que, start_pos, dance_name):
     p = start_pos   
     csv = ""
     while not que.empty():
-        print("moving")
+        # print("moving")
         tf = 50
         t_step = 0.006
         t_array = np.arange(0, tf, t_step)
@@ -61,7 +61,7 @@ def change_joints(que, start_pos, dance_name):
 
             # self.arm.set_servo_angle_j(angles=p, is_radian=False)
             # print(f"{p} {self.num}")
-            print(p)
+            # print(p)
             csv+=(",".join(str(x) for x in p))
             csv+="\n"
             # f.writerow("\n")

@@ -91,10 +91,13 @@ def find_num_entries(times):
 @app.route("/dance/makeCSV", methods=("POST", "GET", ))
 def makeCSV():
     msg = ""
+    numLines=0
     if request.method == "POST":
         body = request.get_json()
         dance_name = (str(body["dance_name"])) if body else (
             request.form["dance_name"])
+        print(dance_name)
+        print(type(dance_name))
         dance = DanceModel.query.filter_by(
             dance_name=dance_name).first_or_404()
         dance_start_pos = json.loads(dance.start_position)
@@ -116,9 +119,6 @@ def makeCSV():
             step_joints.append(json.loads(step.joint_angles))
             step_times.append(json.loads(step.joint_times))
             step_starts.append(json.loads(step.start_position))
-        # print(step_joints)
-        # print("~~~")
-        # print(step_times)
 
         for step_num in range(num_steps):
             for i in range(len(step_joints[step_num])):
@@ -166,9 +166,17 @@ def makeCSV():
                     if que_adds[entry_num][joint_num] == None:
                         que_adds[entry_num-1][joint_num]
             for cont in que_adds:
+                numLines+=1
                 que.put(cont)
-            # for cont in que_adds:
-            #     que.append(cont)
+                if que.qsize()>250:
+                    csv = 'Joint1, Joint2, Joint3, Joint4, Joint5, Joint6, Joint7\n'
+                    csv += change_joints(que, dance_start_pos, dance_name)
+                    response = make_response(csv)
+                    cd = 'attachment; filename=%s.csv' % (dance_name,)
+                    response.headers['Content-Disposition'] = cd
+                    response.mimetype = 'text/csv'
+                    return response
+
       
         csv = 'Joint1, Joint2, Joint3, Joint4, Joint5, Joint6, Joint7\n'
 
@@ -254,21 +262,29 @@ def matlabtoPython(str_in):
 
 def validateDance(start_pos, steps):
     start_pos = matlabtoPython(start_pos)
-    steps = matlabtoPython(steps)
+    # steps = matlabtoPython(steps)
+    steps = steps.replace('[', "")
+    steps = steps.replace(']', "")
+    steps = steps.replace(',', " ")
+    steps = steps.replace(' ,', " ")
+    steps = steps.replace(', ', " ")
+    steps = steps.replace(' , ', " ")
+    steps= [step for step in steps.split(" ") if step!=""]
+
     error_msg = None
     if len(start_pos) != 7:
         error_msg = f"Provide start position for the 7 joints!"
-        return (error_msg, start_pos, joint_angles, joint_times)
+        return (error_msg, start_pos)
     for pos in start_pos:
         if pos > 360:
             error_msg = f"Start position can't be over 360 degrees!"
-            return (error_msg, start_pos, joint_angles, joint_times)
+            return (error_msg, start_pos)
         if pos < -360:
             error_msg = f"Start position can't be under -360 degrees!"
-            return (error_msg, start_pos, joint_angles, joint_times)
+            return (error_msg, start_pos)
 
     for step in steps:
-        if StepModel.query.filter_by(step_name=step).first() is None:
+        if step!="" and StepModel.query.filter_by(step_name=step).first() is None:
             error_msg = f"Step {step} does not exist yet!"
             return (error_msg, start_pos, steps)
 
